@@ -40,20 +40,7 @@ comp[118] = 'B';
 comp[119] = 'W';
 comp[121] = 'R';
 
-var LA_LEN = 995,
-    _PREV = 0,
-    _NEXT = 1,
-    _POS = 2,
-    _DATA = 3;
-
-function newLinkedArray(prev) {
-    var ar = new Array(4);
-    ar[0] = prev;   // _PREV
-                    // _NEXT 
-    ar[2] = 0;      // _POS
-    ar[3] = [];     // _DATA
-    return ar;
-}
+var LA_LEN = 995;
 
 function LinkedArray(prev) {
     this.prev = prev;
