@@ -56,15 +56,18 @@ KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knuc
 
 if [ ! -z "$KNUC_DIFF" ]; then
     echo "v8/knuc-joef.js output fails against reference output."
+    exit 1
 fi
 
 REVCOMP_DIFF=`$D8_BIN v8/revcomp-joef.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
 
 if [ ! -z "$REVCOMP_DIFF" ]; then
     echo "v8/revcomp-joef.js output fails against reference output."
+    exit 1
 fi
 
 if $SMALL ; then
+    echo "There are no discrepancies between the reference output and the output from the modified solutions."
     exit 0
 fi
 
