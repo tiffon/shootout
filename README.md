@@ -1,7 +1,7 @@
 shootout
 ========
 
-Taking a stab at couple of the alioth programming language shootout benchmarks for v8.
+Taking a stab at a couple of the alioth programming language shootout benchmarks for v8.
 
 http://benchmarksgame.alioth.debian.org/u32/performance.php?test=knucleotide
 
