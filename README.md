@@ -7,7 +7,7 @@ http://benchmarksgame.alioth.debian.org/u32/performance.php?test=knucleotide
 
 http://benchmarksgame.alioth.debian.org/u32/performance.php?test=revcomp
 
-The `run.sh` script validates the output from the modified solutions against the reference output. Then, the reference input is expanded to be much larger (500x and 75,000x). Using the larger input files, the performance of the modified solutions are compared to the performance original solutions. 
+The `run.sh` script validates the output from the modified solutions against the reference output. Then, the reference input is expanded to be much larger (500x and 75,000x). Using the larger input files, the performance of the modified solutions are compared to the performance of the original solutions. 
 
 Optionally, the larger files can be deleted when the process is finished (`-c` option). The full usage information for the script:
 
