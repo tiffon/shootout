@@ -1,9 +1,9 @@
 /* The Computer Language Benchmarks Game
     http://benchmarksgame.alioth.debian.org/
 
-    contributed by Jos Hirth
-    modified by 10iii
-    modified by Joe Farro
+    contributed by Joe Farro
+    parts taken from solution contributed by 
+    Jos Hirth which was modified by 10iii
 */
 
 var comp = [];
@@ -117,7 +117,7 @@ write(readline());
 for (line = readline(); line !== undefined; line = readline()) {
     if (line[0] !== '>') {
 
-        if ((lnIdx ^ LA_LEN) === 0) {
+        if (lnIdx === LA_LEN) {
 
             la.pos = LA_LEN;
 
