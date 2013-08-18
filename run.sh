@@ -6,24 +6,28 @@ D8_BIN="d8"
 CLEAN=false
 SMALL=false
 PERSIST_MSG="This file will not be deleted."
+NO_KNUC=
+NO_REV=
 STATUS=0
 
 
 usage(){
   echo "Usage: ./run.sh [-hvcs] [-8 <d8-path>]"
   echo "   Options:"
-  echo "       h    help       Print this message"
-  echo "       v    verbose    Print commands as they're executed"
-  echo "       c    clean      Delete the large input files when finished"
-  echo "       s    small      Do not run large tests"
-  echo "       8    v8         Path to v8 binary"
+  echo "       -h    help       Print this message"
+  echo "       -v    verbose    Print commands as they're executed"
+  echo "       -c    clean      Delete the large input files when finished"
+  echo "       -s    small      Do not run large tests"
+  echo "       -k    knuc       Run only the knucleotide tests"
+  echo "       -r    rev-comp   Run only the reverse-complement tests"
+  echo "       -8    v8         Path to v8 binary"
   echo
   echo "    Example: ./run.sh -c8 /usr/local/v8/out/native/d8"
   exit $STATUS
 }
 
 
-while getopts "hvcs8:" opt; do
+while getopts "hvcskr8:" opt; do
     case "$opt" in
     h)  usage
         ;;
@@ -33,6 +37,10 @@ while getopts "hvcs8:" opt; do
         PERSIST_MSG=""
         ;;
     s)  SMALL=true
+        ;;
+    k)  ONLY_KNUC=true
+        ;;
+    r)  ONLY_REV=true
         ;;
     8)  D8_BIN=$OPTARG
         ;;
@@ -44,6 +52,10 @@ done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
 
+if [ -n "$ONLY_KNUC" ] && [ -n "$ONLY_REV" ]; then
+    echo 'Invalid combination of options.'
+    exit 1
+fi
 
 command -v $D8_BIN >/dev/null 2>&1 || {
     echo >&2 "V8 binary not found: '$D8_BIN'"
@@ -52,26 +64,40 @@ command -v $D8_BIN >/dev/null 2>&1 || {
     exit 1;
 }
 
-KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
+echo "Validate output from modified solution:"
 
-if [ ! -z "$KNUC_DIFF" ]; then
-    echo "v8/knuc-joef.js output fails against reference output."
-    exit 1
+if [ -n "$ONLY_REV" ]; then
+    echo '    knucleotide:        skip'
+else
+    KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
+    if [ ! -z "$KNUC_DIFF" ]; then
+        echo "v8/knuc-joef.js output fails against reference output."
+        exit 1
+    else
+        echo '    knucleotide:        success'
+    fi
 fi
 
-REVCOMP_DIFF=`$D8_BIN v8/revcomp-joef.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
 
-if [ ! -z "$REVCOMP_DIFF" ]; then
-    echo "v8/revcomp-joef.js output fails against reference output."
-    exit 1
+if [ -n "$ONLY_KNUC" ]; then
+    echo '    reverse-complement: skip'
+else
+    REVCOMP_DIFF=`$D8_BIN v8/revcomp-joef.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
+    if [ ! -z "$REVCOMP_DIFF" ]; then
+        echo "v8/revcomp-joef.js output fails against reference output."
+        exit 1
+    else
+        echo '    reverse-complement: success'
+    fi
 fi
+
 
 if $SMALL ; then
-    echo "There are no discrepancies between the reference output and the output from the modified solutions."
     exit 0
 fi
 
-if [ ! -f data/knucleotide-input-500.txt ]; then
+
+if [ -z "$ONLY_REV" ] && [ ! -f data/knucleotide-input-500.txt ]; then
     echo "Creating a large knucleotide input file. $PERSIST_MSG"
     echo "    This may take a few minutes."
     $D8_BIN v8/multiply-input.js -- 500 < data/knucleotide-input.txt > data/knucleotide-input-500.txt 
@@ -80,7 +106,7 @@ if [ ! -f data/knucleotide-input-500.txt ]; then
     echo
 fi
 
-if [ ! -f data/revcomp-input-75k.txt ]; then
+if [ -z "$ONLY_KNUC" ] && [ ! -f data/revcomp-input-75k.txt ]; then
     echo "Creating a large reverse-complement input file. $PERSIST_MSG"
     echo "    This may take a few minutes."
     $D8_BIN v8/multiply-input.js -- 75000 < data/revcomp-input.txt > data/revcomp-input-75k.txt 
@@ -89,33 +115,39 @@ if [ ! -f data/revcomp-input-75k.txt ]; then
     echo
 fi
 
-echo
-echo "KNUCLEOTIDE"
-echo "==========="
+if [ -z "$ONLY_REV" ]; then
+    echo
+    echo "KNUCLEOTIDE"
+    echo "==========="
 
-echo
-echo "Improved script processing time:"
-time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
+    echo
+    echo "Improved script processing time:"
+    time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
 
-echo
-echo "Original script processing time:"
-time $D8_BIN v8/knuc-original.js < data/knucleotide-input-500.txt > /dev/null
+    echo
+    echo "Original script processing time:"
+    time $D8_BIN v8/knuc-original.js < data/knucleotide-input-500.txt > /dev/null
 
-echo
-echo
-echo "REVERSE-COMPLEMENT"
-echo "=================="
+    if $CLEAN ; then
+        rm data/knucleotide-input-500.txt
+    fi
+fi
 
-echo
-echo "Improved script processing time:"
-time $D8_BIN v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
+if [ -z "$ONLY_KNUC" ]; then
+    echo
+    echo
+    echo "REVERSE-COMPLEMENT"
+    echo "=================="
+
+    echo
+    echo "Improved script processing time:"
+    time $D8_BIN v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
 
 
-echo
-echo "Original script processing time:"
-time $D8_BIN v8/revcomp-original.js < data/revcomp-input-75k.txt > /dev/null
-
-if $CLEAN ; then
-    rm data/knucleotide-input-500.txt
-    rm data/revcomp-input-75k.txt
+    echo
+    echo "Original script processing time:"
+    time $D8_BIN v8/revcomp-original.js < data/revcomp-input-75k.txt > /dev/null
+    if $CLEAN ; then
+        rm data/revcomp-input-75k.txt
+    fi
 fi
