@@ -12,7 +12,7 @@ STATUS=0
 
 
 usage(){
-  echo "Usage: ./run.sh [-hvcs] [-8 <d8-path>]"
+  echo "Usage: ./run.sh [-hvcskr] [-8 <d8-path>]"
   echo "   Options:"
   echo "       -h    help       Print this message"
   echo "       -v    verbose    Print commands as they're executed"
@@ -95,7 +95,7 @@ fi
 if $SMALL ; then
     exit 0
 fi
-
+echo
 
 if [ -z "$ONLY_REV" ] && [ ! -f data/knucleotide-input-500.txt ]; then
     echo "Creating a large knucleotide input file. $PERSIST_MSG"
