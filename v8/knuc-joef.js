@@ -1,10 +1,50 @@
-/* The Computer Language Benchmarks Game
-   http://benchmarksgame.alioth.debian.org/
+/*  The Computer Language Benchmarks Game
+    http://benchmarksgame.alioth.debian.org/
 
-   Contributed by Jesse Millikan
-   Modified by Matt Baker
-   Modified by Joe Farro (ArrayBuffer and TypedArrays)
+    Contributed by Joe Farro
+    parts taken from solution contributed by 
+    Jesse Millikan which was modified by Matt Baker
 */
+
+
+
+function SeqSets(len) {
+    this.seqLen = len;
+    this.uintLeft = 0;
+    this.uintRight = 0;
+    this.maskLeft = len <= 12 ? 0 : Math.pow(2, (len - 12) * 2) - 1;
+    this.maskRight = Math.pow(2, Math.min(12, len) * 2) - 1;
+    this.data = {};
+    this.lastUintLeft = undefined;
+    this.lastLeftData = undefined;
+}
+
+SeqSets.prototype.pushToken = function(char) {
+    this.uintLeft = (this.uintLeft << 2 | this.uintRight >>> 22) & this.maskLeft;
+    this.uintRight = (this.uintRight << 2 | char) & this.maskRight;
+};
+
+SeqSets.prototype.inc = function(char) {
+    if (this.uintLeft !== this.lastUintLeft) {
+        this.lastUintLeft = this.uintLeft;
+        this.lastLeftData = this.data[this.uintLeft] = (this.data[this.uintLeft] || {});
+    }
+    this.lastLeftData[this.uintRight] = (this.lastLeftData[this.uintRight] || 0) + 1;
+};
+
+SeqSets.prototype.incWithToken = function(char) {
+    this.pushToken(char);
+    this.inc();
+};
+
+SeqSets.prototype.getCount = function(seq) {
+    var seqLeft = seq.length <= 12 ? '' : seq.substr(0, seq.length - 12),
+        seqRight = seq.substr(-12),
+        uintLeft = seqLeft && toUint(seqLeft) || 0,
+        uintRight = toUint(seqRight);
+
+    return this.data[uintLeft][uintRight];
+};
 
 
 function charToInt(str) {
@@ -48,147 +88,87 @@ function toUint(str) {
 
 var dataLength = 0;
 
-var byLength = [],
-    data1 = {},
-    data2 = {},
-    data3 = {},
-    data4 = {},
-    data6 = {},
-    data12 = {},
-    data18 = {};
+var seq1 = new SeqSets(1),
+    seq2 = new SeqSets(2),
+    seq3 = new SeqSets(3),
+    seq4 = new SeqSets(4),
+    seq6 = new SeqSets(6),
+    seq12 = new SeqSets(12),
+    seq18 = new SeqSets(18);
 
-byLength[1] = data1;
-byLength[2] = data2;
-byLength[3] = data3;
-byLength[4] = data4;
-byLength[6] = data6;
-byLength[12] = data12;
-byLength[18] = data18;
+var tables = [
+    seq1,
+    seq2,
+    seq3,
+    seq4,
+    seq6,
+    seq12,
+    seq18,
+];
 
 
 function readInput() {
 
-    // key-space masks for various lengths
-    var m_1 = 3,            // 2^2 - 1
-        m_2 = 15,           // 2^4 - 1
-        m_3 = 63,           // 2^6 - 1
-        m_4 = 255,          // 2^8 - 1
-        m_6 = 4095,         // 2^12 - 1
-        m_12 = 16777215,    // 2^24 - 1
-        m_18 = 262143;      // 2^18 - 1, (smaller bc split between 2 uint32)
-
-    var buf = new ArrayBuffer(8),
-        uint32 = new Uint32Array(buf, 0, 1),
-        uint32_l = new Uint32Array(buf, 4, 1);
-
     var len = 0,
-        l,
+        line,
         i,
         char,
-        b,
-        u8,
-        u32,
-        u32_l;
+        si,
+        slen = tables.length,
+        seqSet;
 
     while (readline().substr(0, 3) !== '>TH') {
     }
 
-    l = readline();
+    line = readline();
     i = 0;
-    len = l.length;
+    len = line.length;
 
     // the first-line is a special case as not all the counts should start
     // saving immediately
     while (i < 18) {
 
-        char = charToInt(l[i]);
+        char = charToInt(line[i]);
 
-        u32_l = uint32_l[0] = uint32_l[0] << 2 | uint32[0] >>> 16;
-        u32 = uint32[0] = uint32[0] << 2 | char;
-
-        if (i > 10) {
-            u32 &= m_12;
-            data12[u32] = (data12[u32] || 0) + 1;
-        }
-
-        if (i > 16) {
-            u32_l &= m_18;
-            u32 &= m_18;
-            if (b = data18[u32_l]) {
-               b[u32] = (b[u32] || 0) + 1;
-            } else {
-                (data18[u32_l] = {})[u32] = 1;
+        si = 0;
+        iPlusOne = i + 1;
+        for (; si < slen; si++) {
+            seqSet = tables[si];
+            seqSet.pushToken(char);
+            if (seqSet.seqLen <= i + 1) {
+                seqSet.inc();
             }
         }
-
-        if (i > 4) {
-            u32 &= m_6;
-            data6[u32] = (data6[u32] || 0) + 1;
-        }
-
-        if (i > 2) {
-            u32 &= m_4;
-            data4[u32] = (data4[u32] || 0) + 1;
-        }
-
-        if (i > 1) {
-            u32 &= m_3;
-            data3[u32] = (data3[u32] || 0) + 1;
-        }
-
-        if (i > 0) {
-            u32 &= m_2;
-            data2[u32] = (data2[u32] || 0) + 1;
-        }
-
-        u32 &= m_1;
-        data1[u32] = (data1[u32] || 0) + 1;
         i++;
     }
 
     // use do-loop bc want to preserve `i` position on first line
     do {
 
-        len = l.length;
+        len = line.length;
         dataLength += len;
         while (i < len) {
 
-            char = charToInt(l[i]);
+            char = charToInt(line[i]);
+
+            seq1.incWithToken(char);
+            seq2.incWithToken(char);
+            seq3.incWithToken(char);
+            seq4.incWithToken(char);
+            seq6.incWithToken(char);
+            seq12.incWithToken(char);
+            seq18.incWithToken(char);
+
             i++;
-
-            u32_l = uint32_l[0] = (uint32_l[0] << 2 | uint32[0] >>> 16) & m_18;
-            u32 = uint32[0] = uint32[0] << 2 | char;
-
-            u32 &= m_12;
-            data12[u32] = (data12[u32] || 0) + 1;
-            
-            u32 &= m_18;
-            if (b = data18[u32_l]) {
-               b[u32] = (b[u32] || 0) + 1;
-            } else {
-                (data18[u32_l] = {})[u32] = 1;
-            }
-
-            u32 &= m_6;
-            data6[u32] = (data6[u32] || 0) + 1;
-            u32 &= m_4;
-            data4[u32] = (data4[u32] || 0) + 1;
-            u32 &= m_3;
-            data3[u32] = (data3[u32] || 0) + 1;
-            u32 &= m_2;
-            data2[u32] = (data2[u32] || 0) + 1;
-            u32 &= m_1;
-            data1[u32] = (data1[u32] || 0) + 1;
         }
         i = 0;
-    } while ((l = readline()) && l[0] !== '>')
+    } while ((line = readline()) && line[0] !== '>')
 }
 
 
-function sortCounts(seqLen) {
+function sortCounts(data, seqLen) {
 
-    var data = byLength[seqLen],
-        keys = Object.keys(data),
+    var keys = Object.keys(data),
         pctFactor = 100 / (dataLength - seqLen + 1);
 
     keys.sort(function(a, b) {
@@ -201,30 +181,13 @@ function sortCounts(seqLen) {
     print();
 }
 
-
-function printCount(s, s2) {
-
-    var len,
-        count;
-
-    if (s2) {
-        len = s.length + s2.length;
-        count = byLength[len][toUint(s)][toUint(s2)];
-        s += s2;
-    } else {
-        len = s.length;
-        count = byLength[len][toUint(s)];
-    }
-    print(count + '\t' + s.toUpperCase());
-}
-
 readInput();
 
-sortCounts(1);
-sortCounts(2);
+sortCounts(seq1.data[0], 1);
+sortCounts(seq2.data[0], 2);
 
-printCount('ggt');
-printCount('ggta');
-printCount('ggtatt');
-printCount('ggtattttaatt');
-printCount('ggtatttta', 'atttatagt');
+print(seq3.getCount('ggt') +'\tGGT');
+print(seq4.getCount('ggta') +'\tGGTA');
+print(seq6.getCount('ggtatt') +'\tGGTATT');
+print(seq12.getCount('ggtattttaatt') +'\tGGTATTTTAATT');
+print(seq18.getCount('ggtattttaatttatagt') + '\tGGTATTTTAATTTATAGT');
