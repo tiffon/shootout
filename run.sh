@@ -6,8 +6,8 @@ D8_BIN="d8"
 CLEAN=false
 SMALL=false
 PERSIST_MSG="This file will not be deleted."
-NO_KNUC=
-NO_REV=
+ONLY_KNUC=
+ONLY_REV=
 STATUS=0
 
 
