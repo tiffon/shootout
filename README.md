@@ -4,9 +4,9 @@ Taking a stab at the [reverse-compliment](http://benchmarksgame.alioth.debian.or
 
 ## Improvement over previous solutions
 
-The [k-nucleotide solution](http://benchmarksgame.alioth.debian.org/u32/program.php?test=knucleotide&lang=v8&id=5) I submitted reduced the _Elapsed secs_ metric from `5 minutes` to `95.68 seconds` and reduced the _Memory KB_ metric from `462,252` to `36,672`. At the time of this writing, it's the most memory efficient solution, for any language, and is the fastest JavaScript solution (disregarding my previous solution which is considered a "less comparable" program).
+The modified [k-nucleotide solution](http://benchmarksgame.alioth.debian.org/u32/program.php?test=knucleotide&lang=v8&id=5) reduced the _Elapsed secs_ metric from `5 minutes` to `95.68 seconds` and reduced the _Memory KB_ metric from `462,252` to `36,672`. At the time of this writing, it's the most memory efficient solution, for any language, and is the fastest JavaScript solution (disregarding my previous attempt which is posted in the "less comparable programs" section).
 
-The [reverse-compliment solution](http://benchmarksgame.alioth.debian.org/u32/program.php?test=revcomp&lang=v8&id=4) I submitted reduced the _Elapsed secs_ metric from `12.80 seconds` to `9.35 seconds` and reduced the _Memory KB_ metric from `347,808` to `252,288`. At the time of this writing, it's the fastest and most memory efficient JavaScript solution.
+The modified [reverse-compliment solution](http://benchmarksgame.alioth.debian.org/u32/program.php?test=revcomp&lang=v8&id=4) reduced the _Elapsed secs_ metric from `12.80 seconds` to `9.35 seconds` and reduced the _Memory KB_ metric from `347,808` to `252,288`. At the time of this writing, it's the fastest and most memory efficient JavaScript solution.
 
 ## `run.sh`
 
