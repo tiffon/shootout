@@ -1,3 +1,5 @@
+## Please excuse the dead links in this repo while I figure out what happened to the whole Programming Language Shootout website and why all the URLs on the new site point to the same incorrect file.
+
 # shootout
 
 Taking a stab at the [reverse-compliment](http://benchmarksgame.alioth.debian.org/u32/performance.php?test=revcomp) and [k-nucleotide](http://benchmarksgame.alioth.debian.org/u32/performance.php?test=knucleotide) benchmarks from the alioth programming language shootout.
