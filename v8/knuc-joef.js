@@ -7,46 +7,6 @@
 */
 
 
-
-function SeqSets(len) {
-    this.seqLen = len;
-    this.uintLeft = 0;
-    this.uintRight = 0;
-    this.maskLeft = len <= 12 ? 0 : Math.pow(2, (len - 12) * 2) - 1;
-    this.maskRight = Math.pow(2, Math.min(12, len) * 2) - 1;
-    this.data = {};
-    this.lastUintLeft = undefined;
-    this.lastLeftData = undefined;
-}
-
-SeqSets.prototype.pushToken = function(char) {
-    this.uintLeft = (this.uintLeft << 2 | this.uintRight >>> 22) & this.maskLeft;
-    this.uintRight = (this.uintRight << 2 | char) & this.maskRight;
-};
-
-SeqSets.prototype.inc = function(char) {
-    if (this.uintLeft !== this.lastUintLeft) {
-        this.lastUintLeft = this.uintLeft;
-        this.lastLeftData = this.data[this.uintLeft] = (this.data[this.uintLeft] || {});
-    }
-    this.lastLeftData[this.uintRight] = (this.lastLeftData[this.uintRight] || 0) + 1;
-};
-
-SeqSets.prototype.incWithToken = function(char) {
-    this.pushToken(char);
-    this.inc();
-};
-
-SeqSets.prototype.getCount = function(seq) {
-    var seqLeft = seq.length <= 12 ? '' : seq.substr(0, seq.length - 12),
-        seqRight = seq.substr(-12),
-        uintLeft = seqLeft && toUint(seqLeft) || 0,
-        uintRight = toUint(seqRight);
-
-    return this.data[uintLeft][uintRight];
-};
-
-
 function charToInt(str) {
     switch (str) {
         case 'a': return 0;
@@ -55,6 +15,7 @@ function charToInt(str) {
         case 't': return 3;
     }
 }
+
 
 function toStr(num, len) {
     var res = '';
@@ -71,6 +32,7 @@ function toStr(num, len) {
     return res;
 }
 
+
 function toUint(str) {
 
     var offset = 2 * str.length,
@@ -86,17 +48,61 @@ function toUint(str) {
 }
 
 
+function SeqSets(len) {
+    this.seqLen = len;
+    this.uintLeft = 0;
+    this.uintRight = 0;
+    this.maskLeft = len <= 12 ? 0 : Math.pow(2, (len - 12) * 2) - 1;
+    this.maskRight = Math.pow(2, Math.min(12, len) * 2) - 1;
+    this.data = {};
+    this.lastUintLeft = -1;
+    this.lastLeftData = -1;
+}
+
+SeqSets.prototype.pushToken = function(char) {
+    this.uintLeft = (this.uintLeft << 2 | this.uintRight >>> 22) & this.maskLeft;
+    this.uintRight = (this.uintRight << 2 | char) & this.maskRight;
+};
+
+SeqSets.prototype.inc = function(char) {
+    if (this.uintLeft !== this.lastUintLeft) {
+        this.lastUintLeft = this.uintLeft;
+        this.lastLeftData = this.data[this.uintLeft] || (this.data[this.uintLeft] = {});
+    }
+    this.lastLeftData[this.uintRight] = (this.lastLeftData[this.uintRight] || 0) + 1;
+};
+
+SeqSets.prototype.incWithToken = function(char) {
+    this.uintLeft = (this.uintLeft << 2 | this.uintRight >>> 22) & this.maskLeft;
+    this.uintRight = (this.uintRight << 2 | char) & this.maskRight;
+    if (this.uintLeft !== this.lastUintLeft) {
+        this.lastUintLeft = this.uintLeft;
+        this.lastLeftData = this.data[this.uintLeft] || (this.data[this.uintLeft] = {});
+    }
+    this.lastLeftData[this.uintRight] = (this.lastLeftData[this.uintRight] || 0) + 1;
+};
+
+SeqSets.prototype.getCount = function(seq) {
+    var seqLeft = seq.length <= 12 ? '' : seq.substr(0, seq.length - 12),
+        seqRight = seq.substr(-12),
+        uintLeft = seqLeft && toUint(seqLeft) || 0,
+        uintRight = toUint(seqRight);
+
+    return this.data[uintLeft][uintRight];
+};
+
+
 var dataLength = 0;
-
-var seq1 = new SeqSets(1),
-    seq2 = new SeqSets(2),
-    seq3 = new SeqSets(3),
-    seq4 = new SeqSets(4),
-    seq6 = new SeqSets(6),
-    seq12 = new SeqSets(12),
-    seq18 = new SeqSets(18);
-
-var tables = [
+var first18 = 0;
+const stdin = process.stdin;
+const seq1 = new SeqSets(1);
+const seq2 = new SeqSets(2);
+const seq3 = new SeqSets(3);
+const seq4 = new SeqSets(4);
+const seq6 = new SeqSets(6);
+const seq12 = new SeqSets(12);
+const seq18 = new SeqSets(18);
+const tables = [
     seq1,
     seq2,
     seq3,
@@ -106,17 +112,15 @@ var tables = [
     seq18,
 ];
 
-const stdin = process.stdin;
 
-
-function readHead() {
+function skipHead() {
     const chunk = stdin.read();
-    var i;
-    if ((i = chunk.indexOf('>TH')) < 0) {
+    const i = chunk.indexOf('>TH');
+    if (i < 0) {
         return;
     }
-    // stop reading with readHead
-    stdin.removeListener('readable', readHead);
+    // stop reading with skipHead
+    stdin.removeListener('readable', skipHead);
     // get the interesting part of the chunk
     const line = chunk.slice(chunk.indexOf('\n', i) + 1);
     if (line.length <= 18) {
@@ -125,7 +129,6 @@ function readHead() {
     readFirst18(line);
 }
 
-var first18 = 0;
 
 function readFirst18(initialChunk) {
 
@@ -133,12 +136,12 @@ function readFirst18(initialChunk) {
     // the first-line is a special case as not all the counts should start
     // saving immediately
     var j = 0;
-    var slen = tables.length;
-    var si;
-    var seqSet;
+    const slen = tables.length;
+    var si = 0;
+    var seqSet = tables[0];
     while (first18 < 18 && j < line.length) {
 
-        char = charToInt(line[j]);
+        const char = charToInt(line[j]);
 
         si = 0;
         for (; si < slen; si++) {
@@ -172,8 +175,8 @@ function readInput(initialChunk) {
     const len = chunk.length;
     var i = 0;
     var newLines = 0;
-    var charCode;
-    var char;
+    var charCode = 0;
+    var char = 0;
     while (i < len) {
         charCode = chunk[i].charCodeAt(0);
         i++;
@@ -227,6 +230,7 @@ function sortCounts(data, seqLen) {
     console.log();
 }
 
+
 function readingDone(){
 
     sortCounts(seq1.data[0], 1);
@@ -240,4 +244,4 @@ function readingDone(){
 }
 
 stdin.setEncoding('utf8');
-stdin.on('readable', readHead);
+stdin.on('readable', skipHead);
