@@ -243,5 +243,5 @@ function readingDone(){
     console.log(seq18.getCount('ggtattttaatttatagt') + '\tGGTATTTTAATTTATAGT');
 }
 
-stdin.setEncoding('utf8');
+stdin.setEncoding('ascii');
 stdin.on('readable', skipHead);
