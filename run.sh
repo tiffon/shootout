@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 
 D8_BIN="d8"
 CLEAN=false
@@ -69,9 +69,11 @@ echo "Validate output from modified solution:"
 if [ -n "$ONLY_REV" ]; then
     echo '    knucleotide:        skip'
 else
-    KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
+    # KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
+    KNUC_DIFF=`node v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
     if [ ! -z "$KNUC_DIFF" ]; then
         echo "v8/knuc-joef.js output fails against reference output."
+        echo $KNUC_DIFF
         exit 1
     else
         echo '    knucleotide:        success'
@@ -100,7 +102,7 @@ echo
 if [ -z "$ONLY_REV" ] && [ ! -f data/knucleotide-input-500.txt ]; then
     echo "Creating a large knucleotide input file. $PERSIST_MSG"
     echo "    This may take a few minutes."
-    $D8_BIN v8/multiply-input.js -- 500 < data/knucleotide-input.txt > data/knucleotide-input-500.txt 
+    $D8_BIN v8/multiply-input.js -- 500 < data/knucleotide-input.txt > data/knucleotide-input-500.txt
     echo "    data/knucleotide-input-500.txt"
     echo "    bytes: `stat -f "%z" data/knucleotide-input-500.txt`"
     echo
@@ -109,7 +111,7 @@ fi
 if [ -z "$ONLY_KNUC" ] && [ ! -f data/revcomp-input-75k.txt ]; then
     echo "Creating a large reverse-complement input file. $PERSIST_MSG"
     echo "    This may take a few minutes."
-    $D8_BIN v8/multiply-input.js -- 75000 < data/revcomp-input.txt > data/revcomp-input-75k.txt 
+    $D8_BIN v8/multiply-input.js -- 75000 < data/revcomp-input.txt > data/revcomp-input-75k.txt
     echo "    data/revcomp-input-75k.txt"
     echo "    bytes: `stat -f "%z" data/revcomp-input-75k.txt`"
     echo
@@ -122,7 +124,8 @@ if [ -z "$ONLY_REV" ]; then
 
     echo
     echo "Improved script processing time:"
-    time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
+    # time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
+    time node v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
 
     echo
     echo "Original script processing time:"

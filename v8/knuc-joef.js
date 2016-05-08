@@ -2,7 +2,7 @@
     http://benchmarksgame.alioth.debian.org/
 
     Contributed by Joe Farro
-    parts taken from solution contributed by 
+    parts taken from solution contributed by
     Jesse Millikan which was modified by Matt Baker
 */
 
@@ -106,63 +106,109 @@ var tables = [
     seq18,
 ];
 
+const stdin = process.stdin;
 
-function readInput() {
 
-    var len = 0,
-        line,
-        i,
-        char,
-        si,
-        slen = tables.length,
-        seqSet;
-
-    while (readline().substr(0, 3) !== '>TH') {
+function readHead() {
+    const chunk = stdin.read();
+    var i;
+    if ((i = chunk.indexOf('>TH')) < 0) {
+        return;
     }
+    // stop reading with readHead
+    stdin.removeListener('readable', readHead);
+    // get the interesting part of the chunk
+    const line = chunk.slice(chunk.indexOf('\n', i) + 1);
+    if (line.length <= 18) {
+        stdin.on('readable', readFirst18);
+    }
+    readFirst18(line);
+}
 
-    line = readline();
-    i = 0;
-    len = line.length;
+var first18 = 0;
 
+function readFirst18(initialChunk) {
+
+    const line = initialChunk || std.read();
     // the first-line is a special case as not all the counts should start
     // saving immediately
-    while (i < 18) {
+    var j = 0;
+    var slen = tables.length;
+    var si;
+    var seqSet;
+    while (first18 < 18 && j < line.length) {
 
-        char = charToInt(line[i]);
+        char = charToInt(line[j]);
 
         si = 0;
-        iPlusOne = i + 1;
         for (; si < slen; si++) {
             seqSet = tables[si];
             seqSet.pushToken(char);
-            if (seqSet.seqLen <= i + 1) {
+            if (seqSet.seqLen <= j + 1) {
                 seqSet.inc();
             }
         }
-        i++;
+        j++;
+        first18++;
     }
-
-    // use do-loop bc want to preserve `i` position on first line
-    do {
-
-        len = line.length;
-        dataLength += len;
-        while (i < len) {
-
-            char = charToInt(line[i]);
-
-            seq1.incWithToken(char);
-            seq2.incWithToken(char);
-            seq3.incWithToken(char);
-            seq4.incWithToken(char);
-            seq6.incWithToken(char);
-            seq12.incWithToken(char);
-            seq18.incWithToken(char);
-
-            i++;
+    if (first18 === 18) {
+        dataLength = 18;
+        stdin.removeListener('readable', readFirst18);
+        stdin.on('readable', readInput);
+        if (j < line.length) {
+            readInput(line.slice(j));
         }
-        i = 0;
-    } while ((line = readline()) && line[0] !== '>')
+    }
+}
+
+
+function readInput(initialChunk) {
+
+    const chunk = initialChunk || stdin.read();
+    if (!chunk) {
+        readingDone();
+        return;
+    }
+    const len = chunk.length;
+    var i = 0;
+    var newLines = 0;
+    var charCode;
+    var char;
+    while (i < len) {
+        charCode = chunk[i].charCodeAt(0);
+        i++;
+        switch (charCode) {
+            // a
+            case 97:
+                char = 0;
+                break;
+            // c
+            case 99:
+                char = 1;
+                break;
+            // g
+            case 103:
+                char = 2;
+                break;
+            // t
+            case 116:
+                char = 3;
+                break;
+            // new line
+            case 10:
+                newLines++;
+                continue;
+        }
+
+        seq1.incWithToken(char);
+        seq2.incWithToken(char);
+        seq3.incWithToken(char);
+        seq4.incWithToken(char);
+        seq6.incWithToken(char);
+        seq12.incWithToken(char);
+        seq18.incWithToken(char);
+    }
+    dataLength += len - newLines;
 }
 
 
@@ -176,18 +222,22 @@ function sortCounts(data, seqLen) {
     });
 
     keys.forEach(function(code) {
-        print(toStr(code, seqLen), (data[code] * pctFactor).toFixed(3));
+        console.log(toStr(code, seqLen), (data[code] * pctFactor).toFixed(3));
     });
-    print();
+    console.log();
 }
 
-readInput();
+function readingDone(){
 
-sortCounts(seq1.data[0], 1);
-sortCounts(seq2.data[0], 2);
+    sortCounts(seq1.data[0], 1);
+    sortCounts(seq2.data[0], 2);
 
-print(seq3.getCount('ggt') +'\tGGT');
-print(seq4.getCount('ggta') +'\tGGTA');
-print(seq6.getCount('ggtatt') +'\tGGTATT');
-print(seq12.getCount('ggtattttaatt') +'\tGGTATTTTAATT');
-print(seq18.getCount('ggtattttaatttatagt') + '\tGGTATTTTAATTTATAGT');
+    console.log(seq3.getCount('ggt') +'\tGGT');
+    console.log(seq4.getCount('ggta') +'\tGGTA');
+    console.log(seq6.getCount('ggtatt') +'\tGGTATT');
+    console.log(seq12.getCount('ggtattttaatt') +'\tGGTATTTTAATT');
+    console.log(seq18.getCount('ggtattttaatttatagt') + '\tGGTATTTTAATTTATAGT');
+}
+
+stdin.setEncoding('utf8');
+stdin.on('readable', readHead);
