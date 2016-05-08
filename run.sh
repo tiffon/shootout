@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -e
+set -e
 
 D8_BIN="d8"
 CLEAN=false
@@ -9,25 +9,29 @@ PERSIST_MSG="This file will not be deleted."
 ONLY_KNUC=
 ONLY_REV=
 STATUS=0
+REPEAT=1
+IMPROVED_ONLY=
 
 
 usage(){
   echo "Usage: ./run.sh [-hvcskr] [-8 <d8-path>]"
   echo "   Options:"
-  echo "       -h    help       Print this message"
-  echo "       -v    verbose    Print commands as they're executed"
-  echo "       -c    clean      Delete the large input files when finished"
-  echo "       -s    small      Do not run large tests"
-  echo "       -k    knuc       Run only the knucleotide tests"
-  echo "       -r    rev-comp   Run only the reverse-complement tests"
-  echo "       -8    v8         Path to v8 binary"
+  echo "       -h    help           Print this message"
+  echo "       -v    verbose        Print commands as they're executed"
+  echo "       -c    clean          Delete the large input files when finished"
+  echo "       -s    small          Do not run large tests"
+  echo "       -k    knuc           Run only the knucleotide tests"
+  echo "       -r    rev-comp       Run only the reverse-complement tests"
+  echo "       -l    loop           Continuously run only the improved solutions"
+  echo "       -i    improved       Run only the improved solution(s)"
+  echo "       -8    v8             Path to v8 binary"
   echo
   echo "    Example: ./run.sh -c8 /usr/local/v8/out/native/d8"
   exit $STATUS
 }
 
 
-while getopts "hvcskr8:" opt; do
+while getopts "hvcskrli8:" opt; do
     case "$opt" in
     h)  usage
         ;;
@@ -42,6 +46,12 @@ while getopts "hvcskr8:" opt; do
         ;;
     r)  ONLY_REV=true
         ;;
+    l)  REPEAT=99999
+        echo "Repeating the timed runs forever."
+        ;;
+    i)  IMPROVED_ONLY=true
+        echo "Only running the improved solution(s)."
+        ;;
     8)  D8_BIN=$OPTARG
         ;;
     \?) STATUS=1
@@ -51,6 +61,8 @@ while getopts "hvcskr8:" opt; do
 done
 shift $((OPTIND-1))
 [ "$1" = "--" ] && shift
+
+echo
 
 if [ -n "$ONLY_KNUC" ] && [ -n "$ONLY_REV" ]; then
     echo 'Invalid combination of options.'
@@ -69,7 +81,6 @@ echo "Validate output from modified solution:"
 if [ -n "$ONLY_REV" ]; then
     echo '    knucleotide:        skip'
 else
-    # KNUC_DIFF=`$D8_BIN v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
     KNUC_DIFF=`node v8/knuc-joef.js < data/knucleotide-input.txt | diff data/knucleotide-output.txt -`
     if [ ! -z "$KNUC_DIFF" ]; then
         echo "v8/knuc-joef.js output fails against reference output."
@@ -117,40 +128,48 @@ if [ -z "$ONLY_KNUC" ] && [ ! -f data/revcomp-input-75k.txt ]; then
     echo
 fi
 
-if [ -z "$ONLY_REV" ]; then
-    echo
-    echo "KNUCLEOTIDE"
-    echo "==========="
+for i in `seq 1 $REPEAT`;
+do
 
-    echo
-    echo "Improved script processing time:"
-    # time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
-    time node v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
+    if [ -z "$ONLY_REV" ]; then
+        echo
+        echo "KNUCLEOTIDE"
+        echo "==========="
 
-    echo
-    echo "Original script processing time:"
-    time $D8_BIN v8/knuc-original.js < data/knucleotide-input-500.txt > /dev/null
+        echo
+        echo "Improved script processing time:"
+        # time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
+        time node v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
 
-    if $CLEAN ; then
-        rm data/knucleotide-input-500.txt
+        if [ -z "$IMPROVED_ONLY" ]; then
+            echo
+            echo "Original script processing time:"
+            time $D8_BIN v8/knuc-original.js < data/knucleotide-input-500.txt > /dev/null
+        fi
+
+        if $CLEAN ; then
+            rm data/knucleotide-input-500.txt
+        fi
     fi
-fi
 
-if [ -z "$ONLY_KNUC" ]; then
-    echo
-    echo
-    echo "REVERSE-COMPLEMENT"
-    echo "=================="
+    if [ -z "$ONLY_KNUC" ]; then
+        echo
+        echo
+        echo "REVERSE-COMPLEMENT"
+        echo "=================="
 
-    echo
-    echo "Improved script processing time:"
-    time $D8_BIN v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
+        echo
+        echo "Improved script processing time:"
+        time $D8_BIN v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
 
+        if [ -z "$IMPROVED_ONLY" ]; then
+            echo
+            echo "Original script processing time:"
+            time $D8_BIN v8/revcomp-original.js < data/revcomp-input-75k.txt > /dev/null
+        fi
 
-    echo
-    echo "Original script processing time:"
-    time $D8_BIN v8/revcomp-original.js < data/revcomp-input-75k.txt > /dev/null
-    if $CLEAN ; then
-        rm data/revcomp-input-75k.txt
+        if $CLEAN ; then
+            rm data/revcomp-input-75k.txt
+        fi
     fi
-fi
+done
