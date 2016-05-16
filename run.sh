@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+# set -e
 
 D8_BIN="d8"
 CLEAN=false
@@ -91,13 +91,13 @@ else
     fi
 fi
 
-
 if [ -n "$ONLY_KNUC" ]; then
     echo '    reverse-complement: skip'
 else
-    REVCOMP_DIFF=`$D8_BIN v8/revcomp-joef.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
+    REVCOMP_DIFF=`node v8/revcomp-joef3.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
     if [ ! -z "$REVCOMP_DIFF" ]; then
         echo "v8/revcomp-joef.js output fails against reference output."
+        echo $REVCOMP_DIFF
         exit 1
     else
         echo '    reverse-complement: success'
@@ -138,7 +138,6 @@ do
 
         echo
         echo "Improved script processing time:"
-        # time $D8_BIN v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
         time node v8/knuc-joef.js < data/knucleotide-input-500.txt > /dev/null
 
         if [ -z "$IMPROVED_ONLY" ]; then
@@ -160,7 +159,7 @@ do
 
         echo
         echo "Improved script processing time:"
-        time $D8_BIN v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
+        time node v8/revcomp-joef3.js < data/revcomp-input-75k.txt > /dev/null
 
         if [ -z "$IMPROVED_ONLY" ]; then
             echo

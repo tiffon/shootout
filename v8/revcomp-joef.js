@@ -1,46 +1,20 @@
-/* The Computer Language Benchmarks Game
+/*  The Computer Language Benchmarks Game
     http://benchmarksgame.alioth.debian.org/
 
     contributed by Joe Farro
-    parts taken from solution contributed by 
+    parts taken from solution contributed by
     Jos Hirth which was modified by 10iii
 */
 
-var comp = [];
-comp[65] = 'T';
-comp[66] = 'V';
-comp[67] = 'G';
-comp[68] = 'H';
-comp[71] = 'C';
-comp[72] = 'D';
-comp[75] = 'M';
-comp[77] = 'K';
-comp[78] = 'N';
-comp[82] = 'Y';
-comp[83] = 'S';
-comp[84] = 'A';
-comp[85] = 'A';
-comp[86] = 'B';
-comp[87] = 'W';
-comp[89] = 'R';
-comp[97] = 'T';
-comp[98] = 'V';
-comp[99] = 'G';
-comp[100] = 'H';
-comp[103] = 'C';
-comp[104] = 'D';
-comp[107] = 'M';
-comp[109] = 'K';
-comp[110] = 'N';
-comp[114] = 'Y';
-comp[115] = 'S';
-comp[116] = 'A';
-comp[117] = 'A';
-comp[118] = 'B';
-comp[119] = 'W';
-comp[121] = 'R';
 
-var LA_LEN = 995;
+const stdout = process.stdout;
+const stdin = process.stdin;
+
+const READ_SIZE = 16000;
+const writeBuffer = Buffer.allocUnsafe(READ_SIZE + READ_SIZE / 61 | 0);
+let metaI;
+let numLines;
+
 
 function LinkedArray(prev) {
     this.prev = prev;
@@ -49,100 +23,200 @@ function LinkedArray(prev) {
     this.data = [];
 }
 
-function reverse(la) {
 
-    var comps = comp,
-        i,
+function getCompChar(code) {
+    switch (code) {
+        case 65:
+        case 97: return 84;
+        case 66:
+        case 98: return 86;
+        case 67:
+        case 99: return 71;
+        case 68:
+        case 100: return 72;
+        case 71:
+        case 103: return 67;
+        case 72:
+        case 104: return 68;
+        case 75:
+        case 107: return 77;
+        case 77:
+        case 109: return 75;
+        case 78:
+        case 110: return 78;
+        case 82:
+        case 114: return 89;
+        case 83:
+        case 115: return 83;
+        case 84:
+        case 85: return 65;
+        case 86:
+        case 118: return 66;
+        case 87:
+        case 119: return 87;
+        case 116:
+        case 117: return 65;
+        case 89:
+        case 121: return 82;
+    }
+}
+
+
+function reverseCompPrint(line) {
+    let _metaI = metaI;
+    let _numLines = numLines;
+    let count = 0;
+    const target = writeBuffer;
+    const len = line.length;
+    const right = line.length - 1;
+
+    let ileft = 0;
+    let iright = 0;
+
+    let c;
+    while (iright < len) {
+        c = line[right - iright];
+        iright++;
+        if (c === 10) {
+            // skip linebreaks
+            if (iright === len) {
+                break;
+            }
+            c = line[right - iright];
+            iright++;
+        }
+        target[ileft] = getCompChar(c);
+        ileft++;
+        count++;
+        if ((count + _metaI - _numLines) % 60 === 0) {
+            // need a linebreak
+            target[ileft] = 10;
+            ileft++;
+            count++;
+            _numLines++;
+        }
+    }
+    metaI = _metaI + count;
+    numLines = _numLines;
+    stdout.write(target.slice(0, count).toString('ascii'));
+}
+
+
+function reverse(la_) {
+    // reset the metaI and numLines in this section
+    metaI = 0;
+    numLines = 0;
+
+    var la = la_,
         lines = la.data,
         lnIdx = la.pos - 1,
-        line = lines[lnIdx],
-        c = 1,
-        buff = [''],
-        buffIdx = 1,
-        rev = new Array(61);
-
-    rev[0] = '';
-
-    for (; true; ) {
-
-        for (i = line.length; i-- > 0; ++c) {
-            rev[c] = comps[line.charCodeAt(i)];
-            if (c === 60) {
-                buff[buffIdx] = rev.join('');
-                buffIdx++;
-                c = 0;
-            }
-        }
-
-        lnIdx--;
         line = lines[lnIdx];
 
-        if (line !== undefined) {
+    while (true) {
+        reverseCompPrint(line);
+        lnIdx--;
+        line = lines[lnIdx];
+        if (line) {
             continue;
         }
-
         la = la.prev;
         if (la === undefined) {
-            if (c > 1) {
-                buff[buffIdx] = rev.join('').substr(0, c-1);
-                buffIdx++;
-            }
-            buff[buffIdx] = '';
-            buffIdx++;
-            if (buffIdx < buff.length) {
-                write(buff.slice(0,buffIdx).join('\n'));
-            } else {
-                write(buff.join('\n'));
-            }
-            return;
+            break;
         }
-
         lines = la.data;
         lnIdx = la.pos;
         lnIdx--;
         line = lines[lnIdx];
-        write(buff.join('\n'));
-        buffIdx = 1;
+    }
+    if ((metaI - numLines) % 60 !== 0) {
+        stdout.write('\n');
     }
 }
 
-var line,
-    headLA = new LinkedArray(),
-    la = headLA,
-    lnIdx = 0,
-    lines = la.data;
 
-write(readline());
+const LA_LEN = 30;
+const headLA = new LinkedArray();
+let la = headLA;
+let lnIdx = 0;
+let lines = la.data;
 
-for (line = readline(); line !== undefined; line = readline()) {
-    if (line[0] !== '>') {
+let needHeader = true;
+let headerPartial = '';
+let isFirst = true;
 
-        if (lnIdx === LA_LEN) {
 
-            la.pos = LA_LEN;
-
-            if (la.next === undefined) {
-                la = la.next = new LinkedArray(la);
-            } else {
-                la = la.next;
-            }
-            lines = la.data;
-            lines[0] = line;
-            lnIdx = la.pos = 1;
-        } else {
-            lines[lnIdx] = line;
-            lnIdx++;
+function read() {
+    let chunk = stdin.read(READ_SIZE);
+    let isFinal = false;
+    if (!chunk) {
+        if (isFirst) {
+            isFirst = false;
+            return;
         }
-    } else {
-        lc = 0;
         la.pos = lnIdx;
-        reverse(la, comp);
-        write(line);
-        la = headLA;
-        lines = la.data;
-        la.pos = 0;
-        lnIdx = 0;
+        reverse(la);
+        return;
+    } else if (chunk.length < READ_SIZE) {
+        isFinal = true;
+    }
+    while (chunk) {
+        while (true) {
+            // if have read a partial header line, read the rest of it
+            if (needHeader) {
+                const headerEnds = chunk.indexOf('\n');
+                console.log(headerPartial.toString('ascii') + chunk.slice(0, headerEnds).toString('ascii'));
+                headerPartial = '';
+                chunk = chunk.slice(headerEnds);
+                needHeader = false;
+            }
+            const caretIdx = chunk.indexOf('>');
+            if (caretIdx > -1) {
+                // there is a caret in this chunk -- process the first part of
+                // the chunk and then continue the `while (true)` loop to process
+                // the next part of the chunk
+                lines[lnIdx] = chunk.slice(0, caretIdx);
+                // set chunk to the next section
+                chunk = chunk.slice(caretIdx);
+                la.pos = lnIdx + 1;
+                reverse(la);
+                // reset the data holders
+                la = headLA;
+                lines = la.data;
+                la.pos = 0;
+                lnIdx = 0;
+                // check to see if the entire header line is here
+                const headerEnds = chunk.indexOf('\n');
+                if (headerEnds < 0) {
+                    needHeader = true;
+                    headerPartial = chunk;
+                    break;
+                } else {
+                    // log the header
+                    console.log(chunk.slice(0, headerEnds).toString('ascii'));
+                    // continue processing the rest of the chunk
+                    chunk = chunk.slice(headerEnds);
+                }
+            } else {
+                if (lnIdx === LA_LEN) {
+                    la.pos = LA_LEN;
+                    la = la.next || (la.next = new LinkedArray(la));
+                    lines = la.data;
+                    lines[0] = chunk;
+                    lnIdx = la.pos = 1;
+                } else {
+                    lines[lnIdx] = chunk;
+                    lnIdx++;
+                }
+                break;
+            }
+        }
+        chunk = stdin.read(READ_SIZE);
+    }
+    if (isFinal) {
+        la.pos = lnIdx;
+        reverse(la);
     }
 }
-la.pos = lnIdx;
-reverse(la, comp);
+
+
+stdin.on('readable', read);
