@@ -94,7 +94,7 @@ fi
 if [ -n "$ONLY_KNUC" ]; then
     echo '    reverse-complement: skip'
 else
-    REVCOMP_DIFF=`node v8/revcomp-joef3.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
+    REVCOMP_DIFF=`node v8/revcomp-joef.js < data/revcomp-input.txt | diff data/revcomp-output.txt -`
     if [ ! -z "$REVCOMP_DIFF" ]; then
         echo "v8/revcomp-joef.js output fails against reference output."
         echo $REVCOMP_DIFF
@@ -159,7 +159,7 @@ do
 
         echo
         echo "Improved script processing time:"
-        time node v8/revcomp-joef3.js < data/revcomp-input-75k.txt > /dev/null
+        time node v8/revcomp-joef.js < data/revcomp-input-75k.txt > /dev/null
 
         if [ -z "$IMPROVED_ONLY" ]; then
             echo
